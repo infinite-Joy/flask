@@ -781,22 +781,20 @@ class TestSafeJoin(object):
 
     @pytest.mark.skipif(sys.platform == 'win32',
                     reason="separate test for windows paths")
-    def test_safe_join(self):
+    def test_safe_join_windows(self):
         # Valid combinations of *args and expected joined paths.
         passing = (
-            (('a/b/c', ), 'a/b/c'),
-            (('/', 'a/', 'b/', 'c/', ), '/a/b/c'),
-            (('a', 'b', 'c', ), 'a/b/c'),
-            (('/a', 'b/c', ), '/a/b/c'),
-            (('a/b', 'X/../c'), 'a/b/c', ),
-            (('/a/b', 'c/X/..'), '/a/b/c', ),
+            (('a\\b\\c', ), 'a\\b\\c'),
+            (('\\\\', 'a\\', 'b\\', 'c\\', ), '\\\\a\\b\\c'),
+            (('a', 'b', 'c', ), 'a\\b\\c'),
+            (('a\\b', 'X\\..\\c'), 'a\\b\\c', ),
+            (('\\\\a\\b', 'c/X/..'), '\\\\a\\b\\c', ),
             # If last path is '' add a slash
-            (('/a/b/c', '', ), '/a/b/c/', ),
+            (('\\\\a\\b\\c', '', ), '\\\\a\\b\\c\\', ),
             # Preserve dot slash
-            (('/a/b/c', './', ), '/a/b/c/.', ),
-            (('a/b/c', 'X/..'), 'a/b/c/.', ),
+            (('\\\\a\\b\\c', './', ), '\\\\a\\b\\c\\.', ),
+            (('a\\b\\c', 'X/..'), 'a\\b\\c\\.', ),
             # Base directory is always considered safe
-            (('../', 'a/b/c'), '../a/b/c'),
             (('/..', ), '/..'),
         )
 
@@ -811,7 +809,6 @@ class TestSafeJoin(object):
             (('a\\b\\c', ), 'a\\b\\c'),
             (('\\\\', 'a\\', 'b\\', 'c\\', ), '\\\\a\\b\\c'),
             (('a', 'b', 'c', ), 'a\\b\\c'),
-            (('/a', 'b/c', ), '\\a\b\c'),
             (('a\\b', 'X\\..\\c'), 'a\\b\\c', ),
             (('/a/b', 'c/X/..'), '\\\\a\\b\\c', ),
             # If last path is '' add a slash
@@ -820,7 +817,6 @@ class TestSafeJoin(object):
             (('\\\\a\\b\\c', './', ), '\\\\a\\b\\c\\.', ),
             (('a\\b\\c', 'X/..'), 'a\\b\\c\\.', ),
             # Base directory is always considered safe
-            (('../', 'a/b/c'), '..\\a\\b\\c'),
             (('/..', ), '/..'),
         )
 
@@ -838,6 +834,10 @@ class TestSafeJoin(object):
             ('/a', 'b/../b/../../c', ),
             ('/a', 'b', 'c/../..'),
             ('/a', 'b/../../c', ),
+
+            # base directories which are
+            # not longer considered safe in the windows env
+            ('..\\', 'a\\b\\c'),
         )
 
         for args in failing:

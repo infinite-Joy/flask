@@ -910,7 +910,6 @@ class _PackageBoundObject(object):
     def open_resource(self, resource, mode='rb'):
         """Opens a resource from the application's resource folder.  To see
         how this works, consider the following folder structure::
-
             /myapplication.py
             /schema.sql
             /static
