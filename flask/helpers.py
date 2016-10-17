@@ -13,6 +13,7 @@ import os
 import sys
 import pkgutil
 import posixpath
+import ntpath
 import mimetypes
 from time import time
 from zlib import adler32
@@ -39,7 +40,7 @@ from jinja2 import FileSystemLoader
 from .signals import message_flashed
 from .globals import session, _request_ctx_stack, _app_ctx_stack, \
      current_app, request
-from ._compat import string_types, text_type, PY2
+from ._compat import string_types, text_type
 
 
 # sentinel
@@ -513,14 +514,10 @@ def send_file(filename_or_fp, mimetype=None, as_attachment=False,
 
     if mimetype is None:
         if attachment_filename is not None:
-            mimetype = mimetypes.guess_type(attachment_filename)[0]
+            mimetype = mimetypes.guess_type(attachment_filename)[0] \
+                or 'application/octet-stream'
 
         if mimetype is None:
-            if attachment_filename is not None:
-                raise ValueError(
-                    'Unable to infer MIME-type from filename {!r}, please '
-                    'pass one explicitly.'.format(mimetype_filename)
-                )
             raise ValueError(
                 'Unable to infer MIME-type because no filename is available. '
                 'Please set either `attachment_filename`, pass a filepath to '
@@ -563,7 +560,7 @@ def send_file(filename_or_fp, mimetype=None, as_attachment=False,
         rv.cache_control.max_age = cache_timeout
         rv.expires = int(time() + cache_timeout)
 
-    if add_etags and filename is not None and file is None:
+    if add_etags and filename is not None:
         from warnings import warn
 
         try:
@@ -607,7 +604,10 @@ def safe_join(directory, *pathnames):
     """
     for filename in pathnames:
         if filename != '':
-            filename = posixpath.normpath(filename)
+            if sys.platform == 'win32':
+                filename = ntpath.normpath(filename)
+            else:
+                filename = posixpath.normpath(filename)
         for sep in _os_alt_seps:
             if sep in filename:
                 raise NotFound()
@@ -944,3 +944,4 @@ def total_seconds(td):
     :rtype: int
     """
     return td.days * 60 * 60 * 24 + td.seconds
+
